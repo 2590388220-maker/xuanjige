@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://2590388220-maker.github.io/xuanjige/sitemap.xml
