@@ -357,6 +357,9 @@ h2.heading::after{content:'';position:absolute;left:50%;bottom:0;transform:trans
   background:rgba(11,6,20,.55);border:1px solid rgba(217,180,91,.22);word-break:break-word}
 .ai-msg.me .ai-bub{background:rgba(30,20,54,.6);border-color:rgba(143,208,164,.3);color:#e6f0e9}
 .ai-bub b{color:var(--gold-hi);font-weight:600}
+.ai-bub ul,.ai-bub ol{margin:6px 0;padding-left:22px}
+.ai-bub li{margin:3px 0}
+.ai-bub li::marker{color:var(--gold)}
 .ai-msg.me .ai-bub b{color:#b9e6cd}
 .ai-bub .ai-src{margin-top:10px;padding-top:8px;border-top:1px dashed rgba(217,180,91,.3);font-size:12px;color:var(--text2);line-height:1.9}
 .ai-bub .ai-src b{color:var(--gold)}
@@ -482,7 +485,7 @@ h2.heading::after{content:'';position:absolute;left:50%;bottom:0;transform:trans
   <div class="card">
     <div class="orn" style="margin-bottom:12px">解 梦 阁</div>
     <div class="dream-wrap">
-      <textarea class="dm-inp" id="dmInp" maxlength="300" placeholder="把梦原原本本写下来，如：\n「梦见发大水，浑浊的洪水冲进家里，我在水里挣扎，醒来心口发紧」\n\n意象越具体，解得越准——梦里出现了什么、它做了什么、你在做什么、心里什么感觉"></textarea>
+      <textarea class="dm-inp" id="dmInp" maxlength="500" placeholder="把梦原原本本写下来，如：\n「梦见发大水，浑浊的洪水冲进家里，我在水里挣扎，醒来心口发紧」\n\n意象越具体，解得越准——梦里出现了什么、它做了什么、你在做什么、心里什么感觉"></textarea>
       <div class="dm-sub">常见梦象：水 · 蛇 · 掉牙 · 飞翔 · 坠落 · 追赶 · 考试 · 死亡逝者 · 结婚 · 怀孕婴儿 · 钱 · 火 · 鱼 · 房屋 · 迷路 · 鬼怪 · 龙凤 · 山 · 蜘蛛 · 猫狗 · 镜子 · 头发……
         <br>🔒 梦境仅在本机解析，不联网、不上传、不留存</div>
       <div style="text-align:center;margin-top:10px"><button class="btn" id="dmBtn">入 梦 求 解</button></div>
@@ -1003,7 +1006,7 @@ mid:{long:'中停修长——中年当令之运最盛，三十一至五十岁为
 bot:{long:'下停宽厚——晚景最丰，积蓄厚、子女缘旺、部属得力，五十一岁后越走越顺；厚待下属与后辈，即是养自己晚运。',short:'下停偏窄——晚年宜早做规划，理财置产以「稳」字为先；多结善缘、多积健康本钱，晚福靠经营而来。',mid:'下停匀称——晚年平稳有靠，衣食无忧之格，宜养怡之福、含饴弄孙。'}};
 
 /* ================= 观相台逻辑 ================= */
-var XS={mode:null,ptY:[],face:null,feat:{},qi:null,cross:null};
+var XS={mode:null,ptY:[],face:null,feat:{},qi:null,cross:null,imgUrl:null};
 var QIC=[
 ['明润有光','气色明润者，主近期身心两旺、诸事有生气——此为「行运中」的气色，宜乘势做事、乘势见人。'],
 ['晦暗无光','气色晦暗者，主积劳与压力已写在脸上——这不是败相，是身体的提醒：该睡了、该动了，休整即是转运。'],
@@ -1026,7 +1029,7 @@ function renderQA(){
     var n=XS.ptY.length;
     html+='<div class="qa-card'+(n>=4?' done':'')+'"><div class="qa-q"><span class="qno">问'+(no++)+'</span>在照片上依次轻点四处：发际中点、眉心、鼻底、下巴尖</div>'+
       '<div class="qa-sub">（已点 '+n+'/4 · '+['等待发际中点','等待眉心','等待鼻底','等待下巴尖','三停已成'][n]+'）'+
-      (n>0?'　<button class="x-reset" id="xReset">✦ 重新点选</button>':'')+'</div></div>';
+      (n>0?'　<button class="x-reset" id="xUndo">↶ 撤销上一点</button>　<button class="x-reset" id="xReset">✦ 重新点选</button>':'')+'</div></div>';
   }
   if(XS.mode==='nophoto'){
     var gl=XS.stopsGuess,gs=XS.guessShort;
@@ -1087,6 +1090,7 @@ function renderQA(){
     });
   });
   var rs=$('#xReset');if(rs)rs.addEventListener('click',function(){XS.ptY=[];drawStops();renderQA();});
+  var un=$('#xUndo');if(un)un.addEventListener('click',function(){XS.ptY.pop();drawStops();renderQA();});
   var featDoneAll=['brow','eye','nose','mouth','ear'].every(function(k){return XS.feat[k]!==undefined});
   var crossDone=XS.cross!==null;
   var stopsDone=(XS.mode==='photo'&&XS.ptY.length===4)||(XS.mode==='nophoto'&&XS.guessShort!==undefined&&XS.stopsGuess!==undefined);
@@ -1136,22 +1140,22 @@ function initXiang(){
   ui.addEventListener('change',function(){if(ui.files[0])loadPic(ui.files[0])});
   function loadPic(f){
     if(!/^image\//.test(f.type)){$('#xHint').textContent='请选择图片文件';return;}
-    var rd=new FileReader();
-    rd.onload=function(){
-      var im=new Image();
-      im.onload=function(){
-        XS.mode='photo';XS.img=im;XS.ptY=[];XS.stopsGuess=undefined;XS.guessShort=undefined;
-        uz.classList.remove('haspic');uz.classList.add('mini');
-        uz.innerHTML='<div class="uz-t1">✦ 照片已入观相台 · 点击此处可更换照片</div>';
-        if(skip)skip.style.display='none';
-        $('#xHint').textContent='照片已入观相台 · 请在下方按提示点选三停四点';
-        XSTEP=1;
-        $('#xStageWrap').innerHTML='';
-        drawStops();renderQA();
-      };
-      im.src=rd.result;
+    if(XS.imgUrl){try{URL.revokeObjectURL(XS.imgUrl)}catch(e){}}
+    var url=URL.createObjectURL(f);
+    XS.imgUrl=url;
+    var im=new Image();
+    im.onload=function(){
+      XS.mode='photo';XS.img=im;XS.ptY=[];XS.stopsGuess=undefined;XS.guessShort=undefined;
+      uz.classList.remove('haspic');uz.classList.add('mini');
+      uz.innerHTML='<div class="uz-t1">✦ 照片已入观相台 · 点击此处可更换照片</div>';
+      if(skip)skip.style.display='none';
+      $('#xHint').textContent='照片已入观相台 · 请在下方按提示点选三停四点';
+      XSTEP=1;
+      $('#xStageWrap').innerHTML='';
+      drawStops();renderQA();
     };
-    rd.readAsDataURL(f);
+    im.onerror=function(){$('#xHint').textContent='这张图片读不出来，请换一张试试';};
+    im.src=url;
   }
   var skip=document.createElement('button');
   skip.id='xSkip';
@@ -1289,7 +1293,8 @@ function genXiang(){
   $('#xResult').innerHTML=html;
   var ag=$('#xAgain');
   if(ag)ag.addEventListener('click',function(){
-    XS={mode:null,ptY:[],face:null,feat:{},qi:null,cross:null};XSTEP=0;
+    if(XS.imgUrl){try{URL.revokeObjectURL(XS.imgUrl)}catch(e){}}
+    XS={mode:null,ptY:[],face:null,feat:{},qi:null,cross:null,imgUrl:null};XSTEP=0;
     $('#xResult').innerHTML='';$('#qaFlow').innerHTML='';$('#xStageWrap').innerHTML='';
     $('#upZone').classList.remove('haspic','mini');
     $('#upZone').innerHTML='<div class="uz-icon">☯</div><div class="uz-t1">点此上传正面照 · 或将照片拖入此框</div><div class="uz-t2">面向镜头、免冠、光线充足、五官无遮挡为佳<br>仅支持本机解析：不联网、不上传、不保存，关页即逝</div>';
@@ -1688,8 +1693,29 @@ function aiFmt(t){
   t=t.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
   t=t.replace(/^#{1,4}\s*(.+)$/gm,'<b>$1</b>');
   t=t.replace(/`([^`\n]+)`/g,'<b>$1</b>');
-  t=t.replace(/\n/g,'<br>');
-  return t;
+  t=t.replace(/\[([^\]\n]+)\]\((https?:\/\/[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline dotted">$1</a>');
+  var ls=t.split('\n'),out='',ul=false,ol=false;
+  for(var i=0;i<ls.length;i++){
+    var ln=ls[i];
+    var m=ln.match(/^\s*[-•]\s+(.*)$/);
+    var m2=ln.match(/^\s*\d+[.、)]\s+(.*)$/);
+    if(m){
+      if(ol){out+='</ol>';ol=false}
+      if(!ul){out+='<ul>';ul=true}
+      out+='<li>'+m[1]+'</li>';
+    }else if(m2){
+      if(ul){out+='</ul>';ul=false}
+      if(!ol){out+='<ol>';ol=true}
+      out+='<li>'+m2[1]+'</li>';
+    }else{
+      if(ul){out+='</ul>';ul=false}
+      if(ol){out+='</ol>';ol=false}
+      out+=ln+'<br>';
+    }
+  }
+  if(ul)out+='</ul>';
+  if(ol)out+='</ol>';
+  return out;
 }
 function aiSys(){
   var s='你是「玄机阁」应用里的AI阁主，兼通命理八字、面相解梦和现代百科。说话规矩：1、一律大白话，像明白事理的老朋友聊天，不说文言、不堆术语；2、先给结论再讲原因，重点放最前面；3、必须用命理词（日主、伤官、喜用这些）时，紧跟括号、用一句人话解释；4、多用短句短段，每段不超三行；5、建议要具体：能做什么、别做什么、第一步干什么；6、医疗、法律、大额钱财的事，提醒一句找专业人士；7、不吓唬人、不讲宿命论，常说「事在人为」。回复五百字内，最重要的结论用【】标出。';
@@ -1713,6 +1739,18 @@ function aiMsg(role,html){
   log.appendChild(d);log.scrollTop=log.scrollHeight;
   return d.querySelector('.ai-bub');
 }
+function aiHistSave(){try{localStorage.setItem('xuanji_aih',JSON.stringify(AIH.slice(-20)))}catch(e){}}
+function aiHistLoad(){
+  try{
+    var h=JSON.parse(localStorage.getItem('xuanji_aih')||'null');
+    if(h&&h.length){
+      AIH=h.slice(-100);
+      h.forEach(function(m){aiMsg(m.role==='user'?'user':'ai',aiFmt(m.content))});
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
 function aiWelcome(){
   var hasB=false;try{hasB=!!JSON.parse(localStorage.getItem('xuanji_bazi')||'null')}catch(e){}
   var html='我是玄机阁的AI阁主，<b>什么都能问</b>：命理运势、感情事业、健康养生、百科知识都行。'+(hasB?'你已经排过八字——问命理运势，我会结合你的生辰来答。':'建议先去「☰ 八字」页排一盘生辰，之后问命理的事会答得更准。')+'<br>规矩就三条：<b>先说结论再讲原因；说人话不绕弯；建议给到能直接照做。</b>';
@@ -1722,7 +1760,7 @@ function aiWelcome(){
 function aiSuggInit(){
   $('#aiSugg').innerHTML=AISUGG.map(function(x){return '<button data-s="'+x+'">'+x+'</button>'}).join('');
   $('#aiSugg').querySelectorAll('button').forEach(function(b){
-    b.addEventListener('click',function(){$('#aiInp').value=b.getAttribute('data-s');$('#aiInp').focus()});
+    b.addEventListener('click',function(){$('#aiInp').value=b.getAttribute('data-s');aiSend()});
   });
 }
 function aiWebChip(){
@@ -1735,7 +1773,11 @@ function aiGuide(){
   var k=$('#aiProv').value;
   $('#aiGuide').innerHTML=AIP[k].g+(AIP[k].web?'<br><b>✦ 此服务商支持联网搜索</b>——保存后回问天台点「🌐 联网搜索」即可。':'');
 }
+var AIbusy=false,AIabort=null,AItimer=null,AIstopReason=null;
+function aiKick(){clearTimeout(AItimer);AItimer=setTimeout(function(){if(AIbusy){AIstopReason='timeout';try{AIabort.abort()}catch(e){}}},45000)}
+function aiEnd(){AIbusy=false;AIabort=null;clearTimeout(AItimer);AIstopReason=null;$('#aiSend').textContent='发 送'}
 async function aiSend(){
+  if(AIbusy){AIstopReason='user';try{AIabort.abort()}catch(e){}return;}
   var inp=$('#aiInp'),txt=inp.value.trim(),err=$('#aiErr');
   err.textContent='';
   if(!txt)return;
@@ -1744,7 +1786,9 @@ async function aiSend(){
   $('#aiSugg').style.display='none';
   aiMsg('user',aiFmt(txt));
   var bub=aiMsg('ai','<span class="dots">正在想 <i>·</i><i>·</i><i>·</i></span>');
-  $('#aiSend').disabled=true;
+  AIbusy=true;AIstopReason=null;AIabort=new AbortController();
+  $('#aiSend').textContent='停 止';
+  aiKick();
   var msgs=[{role:'system',content:aiSys()}];
   AIH.slice(-10).forEach(function(m){msgs.push({role:m.role,content:m.content})});
   msgs.push({role:'user',content:txt});
@@ -1752,19 +1796,20 @@ async function aiSend(){
   if(AIC.p==='zhipu'&&AIC.web){body.tools=[{type:'web_search',web_search:{search_engine:'search_std',search_result:true}}];}
   var acc='',srcs=null;
   try{
-    var res=await fetch(AIC.ep,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+AIC.k},body:JSON.stringify(body)});
+    var res=await fetch(AIC.ep,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+AIC.k},body:JSON.stringify(body),signal:AIabort.signal});
     if(!res.ok){
       var et='';try{et=await res.text()}catch(e){}
       var msg=(res.status===401)?'API Key 无效或失效（401），请到「⚙ 接口设置」核对':((res.status===429)?'请求太频或免费额度用尽（429），稍候再试':'接口返回 '+res.status+'：'+et.substring(0,150));
       err.textContent=msg;
       bub.innerHTML='<span style="color:var(--red)">✕ 此问未成——'+aiEsc(msg)+'</span>';
-      $('#aiSend').disabled=false;
+      aiEnd();
       return;
     }
     var reader=res.body.getReader(),dec=new TextDecoder(),buf='';
     while(true){
       var rd=await reader.read();
       if(rd.done)break;
+      aiKick();
       buf+=dec.decode(rd.value,{stream:true});
       var ls=buf.split('\n');buf=ls.pop();
       for(var li=0;li<ls.length;li++){
@@ -1793,11 +1838,27 @@ async function aiSend(){
     }
     bub.innerHTML=aiFmt(fin)+srcHtml;
     AIH.push({role:'user',content:txt},{role:'assistant',content:fin});
+    if(AIH.length>100)AIH=AIH.slice(-100);
+    aiHistSave();
   }catch(e){
-    err.textContent='连接失败：'+(e&&e.message?e.message:'网络异常')+'。请检查网络；若持续失败，可在「⚙ 接口设置」换「硅基流动」或「自定义」接口再试。';
-    bub.innerHTML='<span style="color:var(--red)">✕ 连接未成——网络不通或该接口不允许网页直连（详见下方提示）。</span>';
+    if(AIstopReason==='user'){
+      if(acc){
+        bub.innerHTML=aiFmt(acc)+'<br><span style="color:var(--text2)">——（已手动停止作答）——</span>';
+        AIH.push({role:'user',content:txt},{role:'assistant',content:acc});
+        if(AIH.length>100)AIH=AIH.slice(-100);
+        aiHistSave();
+      }else{
+        bub.innerHTML='<span style="color:var(--amber)">✕ 你已停止本次作答。</span>';
+      }
+    }else if(AIstopReason==='timeout'){
+      err.textContent='等待太久没有回应，已自动停止——请检查网络后再试。';
+      bub.innerHTML='<span style="color:var(--red)">✕ 久候无回应——已自动中断。若反复出现，可在「⚙ 接口设置」换个接口试试。</span>';
+    }else{
+      err.textContent='连接失败：'+(e&&e.message?e.message:'网络异常')+'。请检查网络；若持续失败，可在「⚙ 接口设置」换「硅基流动」或「自定义」接口再试。';
+      bub.innerHTML='<span style="color:var(--red)">✕ 连接未成——网络不通或该接口不允许网页直连（详见下方提示）。</span>';
+    }
   }
-  $('#aiSend').disabled=false;
+  aiEnd();
 }
 function aiCfgSave(){
   AIC={p:$('#aiProv').value,ep:$('#aiEp').value.trim(),m:$('#aiModel').value.trim(),k:$('#aiKey').value.trim(),web:AIC.web};
@@ -1826,7 +1887,9 @@ function initAi(){
   $('#aiEp').value=AIC.ep||AIP[AIC.p].ep;
   $('#aiModel').value=AIC.m||AIP[AIC.p].m;
   $('#aiKey').value=AIC.k||'';
-  aiGuide();aiWebChip();aiWelcome();aiSuggInit();
+  aiGuide();aiWebChip();
+  if(!aiHistLoad())aiWelcome();
+  aiSuggInit();
   $('#aiProv').addEventListener('change',function(){
     var k=this.value;
     $('#aiEp').value=AIP[k].ep;$('#aiModel').value=AIP[k].m;
@@ -1851,12 +1914,13 @@ function initAi(){
     $('#aiErr').textContent=AIC.web?'已开启联网搜索：问时效之事，阁主会先查再说。':'已关闭联网搜索。';
   });
   $('#aiClear').addEventListener('click',function(){
-    AIH=[];$('#aiLog').innerHTML='';aiWelcome();
+    AIH=[];try{localStorage.removeItem('xuanji_aih')}catch(e){}
+    $('#aiLog').innerHTML='';aiWelcome();
     $('#aiSugg').style.display='flex';
   });
   $('#aiSend').addEventListener('click',aiSend);
   $('#aiInp').addEventListener('keydown',function(e){
-    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();aiSend();}
+    if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){e.preventDefault();aiSend();}
   });
 }
 /* ================= 初始化 ================= */
